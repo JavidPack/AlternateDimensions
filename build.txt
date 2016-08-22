@@ -1,0 +1,11 @@
+author = jopojelly
+version = 0.0.0.2
+displayName = Alternate Dimensions
+homepage = 
+buildIgnore = *.csproj, *.user, obj\*, bin\*, .vs\*, desktop.ini
+includePDB = true
+languageVersion = 6
+hideCode = false
+hideResources = false
+includeSource = true
+noCompile = false
