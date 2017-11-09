@@ -149,7 +149,7 @@ namespace AlternateDimensions
 			}
 		}
 
-		public override void SendCustomData(BinaryWriter writer)
+		public override void NetSend(BinaryWriter writer)
 		{
 			DebugText($"SendCustomData AltDimWorld called: ded:{Main.dedServ}, myplayer:{Main.myPlayer}, mode:{Main.netMode}");
 
@@ -170,7 +170,7 @@ namespace AlternateDimensions
 
 		// Happens fairly often, but most importantly at join.
 		// To Test: will data still be there when go between SP and MP?
-		public override void ReceiveCustomData(BinaryReader reader)
+		public override void NetReceive(BinaryReader reader)
 		{
 			DebugText($"ReceiveCustomData AltDimWorld called: ded:{Main.dedServ}, myplayer:{Main.myPlayer}, mode:{Main.netMode}");
 

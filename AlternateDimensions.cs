@@ -37,15 +37,15 @@ namespace AlternateDimensions
 			worldInstance.Unload();
 		}
 
-		public static void SendTextToPlayer(string msg, int playerIndex, Color color = new Color())
-		{
-			NetMessage.SendData(25, playerIndex, -1, msg, 255, color.R, color.G, color.B, 0);
-		}
+		//public static void SendTextToPlayer(string msg, int playerIndex, Color color = new Color())
+		//{
+		//	NetMessage.SendData(25, playerIndex, -1, msg, 255, color.R, color.G, color.B, 0);
+		//}
 
-		public static void SendTextToAllPlayers(string msg, Color color = new Color())
-		{
-			NetMessage.SendData(25, -1, -1, msg, 255, color.R, color.G, color.B, 0);
-		}
+		//public static void SendTextToAllPlayers(string msg, Color color = new Color())
+		//{
+		//	NetMessage.SendData(25, -1, -1, msg, 255, color.R, color.G, color.B, 0);
+		//}
 
 		public override void HotKeyPressed(string name)
 		{
@@ -59,10 +59,10 @@ namespace AlternateDimensions
 			}
 		}
 
-		public override void ChatInput(string text)
-		{
-			worldInstance.ChatInput(text);
-		}
+		//public override void ChatInput(string text)
+		//{
+		//	worldInstance.ChatInput(text);
+		//}
 
 
 		public override void HandlePacket(BinaryReader reader, int whoAmI)
@@ -77,7 +77,7 @@ namespace AlternateDimensions
 					Vector2 destination = new Vector2(x * 16, y * 16);
 					Main.player[whoAmI].Teleport(destination, 1, 0);
 					RemoteClient.CheckSection(whoAmI, destination, 1);
-					NetMessage.SendData(65, -1, -1, "", 0, whoAmI, destination.X, destination.Y, 1, 0, 0);
+					NetMessage.SendData(65, -1, -1, null, 0, whoAmI, destination.X, destination.Y, 1, 0, 0);
 					break;
 				//case MessageType.DimensionsData: // Server has sent Dimension data
 				//	worldInstance.ReceiveDimensionData(reader);
