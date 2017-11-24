@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Terraria.GameContent.Generation;
 using System;
 using System.Linq;
+using Terraria.ModLoader.IO;
 
 namespace AlternateDimensions
 {
@@ -76,10 +77,9 @@ namespace AlternateDimensions
 		}
 
 		// version 0: version, # segments, [int #, string modname, string areaname, rectangle area]*
-		public override void SaveCustomData(BinaryWriter writer)
+		public override TagCompound Save()
 		{
 			DebugText($"SaveCustomData AltDimWorld called: ded:{Main.dedServ}, myplayer:{Main.myPlayer}, mode:{Main.netMode}");
-
 
 			// Existing world, not generated with this. No previous custom data?
 			if (existsInWorldDimensions.Count == 0)
@@ -87,65 +87,33 @@ namespace AlternateDimensions
 				existsInWorldDimensions.Add(new Dimension(0, "vanilla", "vanillaarea", new Rectangle(0, 0, Main.maxTilesX, Main.maxTilesY)));
 			}
 
-			writer.Write(saveVersion); // necessary.
-			writer.Write(existsInWorldDimensions.Count);
-			for (int i = 0; i < existsInWorldDimensions.Count; i++)
+			TagCompound tag = new TagCompound
 			{
-				writer.Write(Dimension.saveversion);
-				writer.Write(i);
-				writer.Write(existsInWorldDimensions[i].modname);
-				writer.Write(existsInWorldDimensions[i].areaname);
-				writer.Write(existsInWorldDimensions[i].area.X);
-				writer.Write(existsInWorldDimensions[i].area.Y);
-				writer.Write(existsInWorldDimensions[i].area.Width);
-				writer.Write(existsInWorldDimensions[i].area.Height);
-				DebugText($"Writing out {existsInWorldDimensions[i]}");
-			}
+				["saveVersion"] = saveVersion,
+				["Dimensions"] = existsInWorldDimensions.Select(Dimension.Save).ToList(),
+			};
 			DebugText($"Wrote out {existsInWorldDimensions.Count} sections");
+			return tag;
 		}
 
-		public override void LoadCustomData(BinaryReader reader)
+		public override void Load(TagCompound tag)
 		{
 			DebugText($"LoadCustomData AltDimWorld called: ded:{Main.dedServ}, myplayer:{Main.myPlayer}, mode:{Main.netMode}");
+			int version = tag.GetInt("saveVersion");
+			existsInWorldDimensions = new List<Dimension>(tag.GetList<TagCompound>("Dimensions").Select(Dimension.Load));
 
-			int version = reader.ReadInt32();
-			if (version == 0)
+			Dimension vanilla = existsInWorldDimensions.FirstOrDefault(x => x.modname == "vanilla");
+			if (vanilla != null)
 			{
-				int count = reader.ReadInt32();
-				for (int i = 0; i < count; i++)
+				if (!Main.dedServ)
 				{
-					int worldSectionVersion = reader.ReadInt32();
-					if (worldSectionVersion == 0)
-					{
-						int index = reader.ReadInt32();
-						string modname = reader.ReadString();
-						string areaname = reader.ReadString();
-						int x = reader.ReadInt32();
-						int y = reader.ReadInt32();
-						int width = reader.ReadInt32();
-						int height = reader.ReadInt32();
-						Rectangle area = new Rectangle(x, y, width, height);
-						existsInWorldDimensions.Add(new Dimension(index, modname, areaname, area));
-						DebugText("Loaded " + existsInWorldDimensions[i]);
-					}
-					else
-					{
-						DebugText("Unhandled worldSectionVersion: " + worldSectionVersion);
-					}
+					SetSection(vanilla); // TODO, called before or after setworldsize?
+					DebugText("Loading Vanilla: " + vanilla.ToString());
 				}
-				Dimension vanilla = existsInWorldDimensions.FirstOrDefault(x => x.modname == "vanilla");
-				if (vanilla != null)
-				{
-					if (!Main.dedServ)
-					{
-						SetSection(vanilla); // TODO, called before or after setworldsize?
-						DebugText("Loading Vanilla: " + vanilla.ToString());
-					}
-				}
-				else
-				{
-					DebugText("Uhoh, no vanilla!");
-				}
+			}
+			else
+			{
+				DebugText("Uhoh, no vanilla!");
 			}
 		}
 
@@ -209,6 +177,18 @@ namespace AlternateDimensions
 			}
 			DebugText("Received existsInWorldDimensions: " + existsInWorldDimensions.Count);
 			//received = true;
+		}
+
+		public override void PreUpdate()
+		{
+			// Fix Pillar/WoF issues manually.
+			// Only update vanilla dimension by changing MaxTilesX?
+		}
+
+		public override void PostUpdate()
+		{
+			// Restore MaxTilesX.
+			// Run Vanilla UpdateWorld if desired on Alternate dimensions.
 		}
 
 		// HOOKS Section
@@ -297,7 +277,7 @@ namespace AlternateDimensions
 			Main.bottomWorld = section.area.Bottom * 16;
 
 			// TODO. Set surface and rock layer?
-			if(section.area.Left == 0)
+			if (section.area.Left == 0)
 			{
 
 			}
@@ -719,6 +699,30 @@ namespace AlternateDimensions
 		public override string ToString()
 		{
 			return $"I:{index} MN:{modname} AN:{areaname} L:{area.Left} R:{area.Right} T:{area.Top} B:{area.Bottom}";
+		}
+
+		public static TagCompound Save(Dimension dimension)
+		{
+			var tag = new TagCompound();
+			tag.Set("saveversion", Dimension.saveversion);
+			tag.Set("index", dimension.index);
+			tag.Set("modname", dimension.modname);
+			tag.Set("areaname", dimension.areaname);
+			tag.Set("area", dimension.area);
+			AlternateDimensionsWorld.DebugText($"Writing out {dimension}");
+			return tag;
+		}
+
+		public static Dimension Load(TagCompound tag)
+		{
+			int saveversion = tag.GetInt("saveversion");
+			int index = tag.GetInt("index");
+			string modname = tag.GetString("modname");
+			string areaname = tag.GetString("areaname");
+			Rectangle area = tag.Get<Rectangle>("area");
+			Dimension result = new Dimension(index, modname, areaname, area);
+			AlternateDimensionsWorld.DebugText("Loaded " + result);
+			return result;
 		}
 	}
 }

@@ -16,17 +16,21 @@ namespace AlternateDimensions
 	{
 		internal static AlternateDimensions modInstance;
 		internal static AlternateDimensionsWorld worldInstance;
-
-		double pressedSwapWorldsHotKeyTime;
+		internal static ModHotKey SwapWorldsHotkey;
 
 		public AlternateDimensions()
 		{
-			Properties = new ModProperties() { Autoload = true };
 		}
 
 		public override void Load()
 		{
-			RegisterHotKey("Swap Worlds", "O");
+			// 0.10.2 needed for Rectangle TagSerializer
+			//if (ModLoader.version < new Version(0, 10, 2))
+			//{
+			//	throw new Exception("\nThis mod uses functionality only present in the latest tModLoader. Please update tModLoader to use this mod\n\n");
+			//}
+
+			SwapWorldsHotkey = RegisterHotKey("Swap Worlds", "O");
 			modInstance = this;
 			worldInstance = (AlternateDimensionsWorld)GetModWorld("AlternateDimensionsWorld");
 			worldInstance.Load();
@@ -35,6 +39,7 @@ namespace AlternateDimensions
 		public override void Unload()
 		{
 			worldInstance.Unload();
+			SwapWorldsHotkey = null;
 		}
 
 		//public static void SendTextToPlayer(string msg, int playerIndex, Color color = new Color())
@@ -47,23 +52,10 @@ namespace AlternateDimensions
 		//	NetMessage.SendData(25, -1, -1, msg, 255, color.R, color.G, color.B, 0);
 		//}
 
-		public override void HotKeyPressed(string name)
-		{
-			if (name == "Swap Worlds")
-			{
-				if (Math.Abs(Main.time - pressedSwapWorldsHotKeyTime) > 100)
-				{
-					pressedSwapWorldsHotKeyTime = Main.time;
-					worldInstance.Switch();
-				}
-			}
-		}
-
 		//public override void ChatInput(string text)
 		//{
 		//	worldInstance.ChatInput(text);
 		//}
-
 
 		public override void HandlePacket(BinaryReader reader, int whoAmI)
 		{
